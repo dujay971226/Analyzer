@@ -117,7 +117,7 @@ def write_csv(rat_high: list[RatData], rat_low: list[RatData], filename: str) ->
 
 
 def main():
-    folder = "C:\Users\Imaris Ryzen\Downloads\MRS"
+    folder = "C:/Users/Imaris Ryzen/Downloads/MRS"
     rats_high = []
     rats_low = []
     fields = []
