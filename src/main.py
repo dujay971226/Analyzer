@@ -29,73 +29,98 @@ class RatData:
 
 
 
-class RatDataHighGlc(RatData):
+class RatDataHighiso(RatData):
     """Data Object collected from a mouse under high iso.
 
             Attributes:
-                iso: glucose level
+                iso:
 
             Representation Invariants:
-                iso == "glc_high"
+                iso == "iso_high"
             """
     # Attribute types
-    glc: str
+    iso: str
 
     def __init__(self, id: int, gender: str, genetics: str, metabolite: dict) -> None:
         super().__init__(id, gender, genetics, metabolite)
-        self.glc = "glc_high"
+        self.iso = "iso_high"
 
 
 
-class RatDataLowGlc(RatData):
+class RatDataLowiso(RatData):
     """Data Object collected from a mouse under low iso.
 
                 Attributes:
-                    iso: T for high iso, F for low iso
+                    iso: Isoflurane level
 
                 Representation Invariants:
-                    iso == "glc_low"
+                    iso == "iso_low"
                 """
     # Attribute types
-    glc: str
+    iso: str
 
     def __init__(self, id: int, gender: str, genetics: str, metabolite: dict) -> None:
         super().__init__(id, gender, genetics, metabolite)
-        self.glc = "glc_low"
+        self.iso = "iso_low"
 
 
 
-def read_csv(filename: str, id: int, gender: str, genetics: str, glc: bool) -> RatData:
-    if glc:
-        rat_data = RatDataHighGlc(id, gender, genetics, {})
+def read_csv(filename: str, id: int, gender: str, genetics: str, iso: bool):
+    if iso:
+        rat_data = RatDataHighiso(id, gender, genetics, {})
     else:
-        rat_data = RatDataLowGlc(id, gender, genetics, {})
+        rat_data = RatDataLowiso(id, gender, genetics, {})
 
     with open(filename, 'r') as file:
         reader = csv.reader(file)
         data_rows = list(reader)
         for i in range(2, len(data_rows[0], 3)):
-            name = data_rows[0][i] + rat_data.glc
-            value = [(name, float(data_rows[1][i])), ((data_rows[0][i+1] + rat_data.glc), int(data_rows[1][i+1])),
-                     ((data_rows[0][i+2] + rat_data.glc), float(data_rows[1][i+2]))]
-            rat_data.metabolites[name] = value
+            value = [(data_rows[0][i] + "_" + rat_data.iso, float(data_rows[1][i])),
+                     ((data_rows[0][i+1] + "_" + rat_data.iso), int(data_rows[1][i+1])),
+                     ((data_rows[0][i+2] + "_" + rat_data.iso), float(data_rows[1][i+2]))]
+            rat_data.metabolites[data_rows[0][i]] = value
 
     return rat_data
 
 def write_csv(rat_high: list[RatData], rat_low: list[RatData], filename: str) -> None:
+
+    if len(rat_high) < 1 or len(rat_low) < 1:
+        print("No rat data available")
+        return
+
+    fields = ["Id", "Genotype", "Gender"]
+    rats_data = []
+
+    rat_high_field = rat_high[0].metabolites.keys()
+    rat_low_field = rat_low[0].metabolites.keys()
+    for i in range(len(rat_high_field)):
+        for j in range(3):
+            fields.append(rat_high[0].metabolites[rat_high_field[i]][j])
+            fields.append(rat_low[0].metabolites[rat_low_field[i]][j])
+
+    for k in range(len(rat_high)):
+        rat_low_metab = rat_low[k].metabolites
+        rat_high_metab = rat_high[k].metabolites
+        rat_data = [rat_high[k].id, rat_high[k].gender, rat_high[k].genetics]
+        for item in fields[3:]:
+            rat_data.append(rat_high[k].metabolites[item])
+            rat_data.append(rat_low[k].metabolites[item])
+        rats_data.append(rat_data)
+
 
     with open(filename, 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fields)
 
         writer.writeheader()
 
-        writer.writerows(mydict)
+        writer.writerows(rats_data)
 
 
 def main():
     folder = "C:\Users\Imaris Ryzen\Downloads\MRS"
     rats_high = []
     rats_low = []
+    fields = []
 
     for name in os.listdir(folder):
         lst = name.strip().split('_')
