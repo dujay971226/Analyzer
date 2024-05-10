@@ -1,6 +1,7 @@
 import csv
 import os
 
+
 class RatData:
     """Data Object collected from 1 mouse.
 
@@ -14,22 +15,19 @@ class RatData:
                 genetics in {Tg, nTg, TgAD}
             """
     # Attribute types
-    id: int
+    id: str
     gender: str
     genetics: str
     metabolite: dict[str, list[int, int, float]]
 
-    def __init__(self, id: int, gender: str, genetics: str, metabolite: dict) -> None:
-        self.id = id
+    def __init__(self, rat_id: str, gender: str, genetics: str, metabolites: dict) -> None:
+        self.id = rat_id
         self.gender = gender
         self.genetics = genetics
-        self.metabolite = metabolite
+        self.metabolites = metabolites
 
 
-
-
-
-class RatDataHighiso(RatData):
+class RatDataHighIso(RatData):
     """Data Object collected from a mouse under high iso.
 
             Attributes:
@@ -41,13 +39,12 @@ class RatDataHighiso(RatData):
     # Attribute types
     iso: str
 
-    def __init__(self, id: int, gender: str, genetics: str, metabolite: dict) -> None:
-        super().__init__(id, gender, genetics, metabolite)
+    def __init__(self, rat_id: str, gender: str, genetics: str, metabolites: dict) -> None:
+        super().__init__(rat_id, gender, genetics, metabolites)
         self.iso = "iso_high"
 
 
-
-class RatDataLowiso(RatData):
+class RatDataLowIso(RatData):
     """Data Object collected from a mouse under low iso.
 
                 Attributes:
@@ -59,31 +56,30 @@ class RatDataLowiso(RatData):
     # Attribute types
     iso: str
 
-    def __init__(self, id: int, gender: str, genetics: str, metabolite: dict) -> None:
-        super().__init__(id, gender, genetics, metabolite)
+    def __init__(self, rat_id: str, gender: str, genetics: str, metabolites: dict) -> None:
+        super().__init__(rat_id, gender, genetics, metabolites)
         self.iso = "iso_low"
 
 
-
-def read_csv(filename: str, id: int, gender: str, genetics: str, iso: bool):
+def read_csv(filename: str, rat_id: str, gender: str, genetics: str, iso: bool):
     if iso:
-        rat_data = RatDataHighiso(id, gender, genetics, {})
+        rat_data = RatDataHighIso(rat_id, gender, genetics, {})
     else:
-        rat_data = RatDataLowiso(id, gender, genetics, {})
+        rat_data = RatDataLowIso(rat_id, gender, genetics, {})
 
     with open(filename, 'r') as file:
         reader = csv.reader(file)
         data_rows = list(reader)
-        for i in range(2, len(data_rows[0], 3)):
-            value = [(data_rows[0][i] + "_" + rat_data.iso, float(data_rows[1][i])),
-                     ((data_rows[0][i+1] + "_" + rat_data.iso), int(data_rows[1][i+1])),
-                     ((data_rows[0][i+2] + "_" + rat_data.iso), float(data_rows[1][i+2]))]
-            rat_data.metabolites[data_rows[0][i]] = value
+        for i in range(2, len(data_rows[0]), 3):
+            value = [(data_rows[0][i].strip() + " " + rat_data.iso, float(data_rows[1][i])),
+                     ((data_rows[0][i + 1].strip() + " " + rat_data.iso), int(data_rows[1][i + 1])),
+                     ((data_rows[0][i + 2].strip() + " " + rat_data.iso), float(data_rows[1][i + 2]))]
+            rat_data.metabolites[data_rows[0][i].strip()] = value
 
     return rat_data
 
-def write_csv(rat_high: list[RatData], rat_low: list[RatData], filename: str) -> None:
 
+def write_csv(rat_high: list[RatData], rat_low: list[RatData], filename: str) -> None:
     if len(rat_high) < 1 or len(rat_low) < 1:
         print("No rat data available")
         return
@@ -91,22 +87,23 @@ def write_csv(rat_high: list[RatData], rat_low: list[RatData], filename: str) ->
     fields = ["Id", "Genotype", "Gender"]
     rats_data = []
 
-    rat_high_field = rat_high[0].metabolites.keys()
-    rat_low_field = rat_low[0].metabolites.keys()
+    rat_high_field = list(rat_high[0].metabolites.keys())
     for i in range(len(rat_high_field)):
         for j in range(3):
-            fields.append(rat_high[0].metabolites[rat_high_field[i]][j])
-            fields.append(rat_low[0].metabolites[rat_low_field[i]][j])
+            fields.append(rat_high[0].metabolites[rat_high_field[i]][j][0])
+            fields.append(rat_low[0].metabolites[rat_high_field[i]][j][0])
 
     for k in range(len(rat_high)):
-        rat_low_metab = rat_low[k].metabolites
-        rat_high_metab = rat_high[k].metabolites
-        rat_data = [rat_high[k].id, rat_high[k].gender, rat_high[k].genetics]
-        for item in fields[3:]:
-            rat_data.append(rat_high[k].metabolites[item])
-            rat_data.append(rat_low[k].metabolites[item])
-        rats_data.append(rat_data)
 
+        rat_data = {'Id': rat_high[k].id, 'Gender': rat_high[k].gender, 'Genotype': rat_high[k].genetics}
+        for item in fields[3:]:
+            rat_data[rat_high[k].metabolites[item][0][0]] = rat_high[k].metabolites[item][0][1]
+            rat_data[rat_low[k].metabolites[item][0][0]] = rat_low[k].metabolites[item][0][1]
+            rat_data[rat_high[k].metabolites[item][1][0]] = rat_high[k].metabolites[item][1][1]
+            rat_data[rat_low[k].metabolites[item][1][0]] = rat_low[k].metabolites[item][1][1]
+            rat_data[rat_high[k].metabolites[item][2][0]] = rat_high[k].metabolites[item][2][1]
+            rat_data[rat_low[k].metabolites[item][2][0]] = rat_low[k].metabolites[item][2][1]
+        rats_data.append(rat_data)
 
     with open(filename, 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fields)
@@ -123,20 +120,22 @@ def main():
     fields = []
 
     for name in os.listdir(folder):
-        lst = name.strip().split('_')
-        id = int(lst[1])
-        genetics = lst[6]
-        gender = lst[7]
-
-        sub_folder = os.path.join(folder, name)
+        sub_folder = folder + '/' + name
         if os.path.isdir(sub_folder):
-            for iso in os.listdir(folder):
-                root_folder = os.path.join(sub_folder, iso)
-                input_csv = os.path.join(root_folder, "spreadsheet.csv")
-                if "high" in iso:
-                    rats_high.append(read_csv(input_csv, id, gender, genetics, True))
+            lst = name.strip().split('_')
+            id = lst[1]
+            genetics = lst[6]
+            gender = lst[7]
+
+            for iso in os.listdir(sub_folder):
+                if os.path.isdir(sub_folder + '/' + iso):
+                    input_csv = sub_folder + '/' + iso + '/' + "spreadsheet.csv"
+                    if "high" in iso:
+                        rats_high.append(read_csv(input_csv, id, gender, genetics, True))
+                    else:
+                        rats_low.append(read_csv(input_csv, id, gender, genetics, False))
                 else:
-                    rats_low.append(read_csv(input_csv, id, gender, genetics,False))
+                    continue
 
         else:
             continue
