@@ -94,9 +94,8 @@ def write_csv(rat_high: list[RatData], rat_low: list[RatData], filename: str) ->
             fields.append(rat_low[0].metabolites[rat_high_field[i]][j][0])
 
     for k in range(len(rat_high)):
-
         rat_data = {'Id': rat_high[k].id, 'Gender': rat_high[k].gender, 'Genotype': rat_high[k].genetics}
-        for item in fields[3:]:
+        for item in rat_high_field:
             rat_data[rat_high[k].metabolites[item][0][0]] = rat_high[k].metabolites[item][0][1]
             rat_data[rat_low[k].metabolites[item][0][0]] = rat_low[k].metabolites[item][0][1]
             rat_data[rat_high[k].metabolites[item][1][0]] = rat_high[k].metabolites[item][1][1]
@@ -140,7 +139,7 @@ def main():
         else:
             continue
 
-    output_csv = "MRS_Data.csv"
+    output_csv = folder + '/' + "MRS_Data.csv"
 
     write_csv(rats_low, rats_high, output_csv)
 
