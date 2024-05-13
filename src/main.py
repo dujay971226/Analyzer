@@ -108,12 +108,12 @@ def write_csv(rat_high: list[RatData], rat_low: list[RatData], filename: str) ->
             rat_data[rat_low[k].metabolites[item][2][0]] = rat_low[k].metabolites[item][2][1]
         rats_data.append(rat_data)
 
-    total_data = rat_low + rat_high
-    for field in rat_high_field:
-        boxplot(total_data, field, "iso_low")
-        boxplot(total_data, field, "iso_high")
+    # total_data = rat_low + rat_high
+    # for field in rat_high_field:
+    #     boxplot(total_data, field, "iso_low")
+    #     boxplot(total_data, field, "iso_high")
 
-    with open(filename, 'w') as csvfile:
+    with open(filename, 'w', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fields)
 
         writer.writeheader()
@@ -121,36 +121,36 @@ def write_csv(rat_high: list[RatData], rat_low: list[RatData], filename: str) ->
         writer.writerows(rats_data)
 
 
-def boxplot(rat_data: list[RatData], metabolite: str, iso: str) -> None:
-    figsize = (1.25, 3)
-    theme = "whitegrid"
-    palette_geno = ['olivedrab', 'darkorange']
-    title = "20"
-    label = 18
-    tick = 15
-
-    plt.figure(figsize=figsize)
-    sns.set_theme(style=theme)
-
-    data = {item.genetics: item.metabolites[metabolite][0] for item in rat_data if item.iso == iso}
-    x = data.keys()
-    y = data.items()
-    y_lim = (0, 7)
-
-    ax = sns.boxplot(x=x, y=y, data=data, order=["nTg", "Tg", "TgAD"], palette=palette_geno, showmeans=True,
-                     meanprops={"marker": "o", "markerfacecolor": "white", "markeredgecolor": "black",
-                                "markersize": "5"})
-    ax = sns.stripplot(x=x, y=y, data=data, order=["nTg", "Tg", "TgAD"], marker="o", alpha=1, color="black", dodge=0.1)
-
-    plt.title("{} Concentration for {}\n".format(metabolite, iso), fontsize=title)
-    ax.set_xlabel("Genotype", fontsize=label)
-    ax.set_ylabel("concentration (mmol)", fontsize=label)
-    ax.set(ylim=y_lim)
-    ax.set_xticklabels(["nTg", "Tg", "TgAD"], size=tick)
-
-    # ax.legend_.remove()
-
-    plt.savefig('plots/tau_pre_CHOW_nofilter.png', dpi=300, bbox_inches='tight')
+# def boxplot(rat_data: list[RatData], metabolite: str, iso: str) -> None:
+#     figsize = (1.25, 3)
+#     theme = "whitegrid"
+#     palette_geno = ['olivedrab', 'darkorange']
+#     title = "20"
+#     label = 18
+#     tick = 15
+#
+#     plt.figure(figsize=figsize)
+#     sns.set_theme(style=theme)
+#
+#     data = {item.genetics: item.metabolites[metabolite][0] for item in rat_data if item.iso == iso}
+#     x = data.keys()
+#     y = data.items()
+#     y_lim = (0, 7)
+#
+#     ax = sns.boxplot(x=x, y=y, data=data, order=["nTg", "Tg", "TgAD"], palette=palette_geno, showmeans=True,
+#                      meanprops={"marker": "o", "markerfacecolor": "white", "markeredgecolor": "black",
+#                                 "markersize": "5"})
+#     ax = sns.stripplot(x=x, y=y, data=data, order=["nTg", "Tg", "TgAD"], marker="o", alpha=1, color="black", dodge=0.1)
+#
+#     plt.title("{} Concentration for {}\n".format(metabolite, iso), fontsize=title)
+#     ax.set_xlabel("Genotype", fontsize=label)
+#     ax.set_ylabel("concentration (mmol)", fontsize=label)
+#     ax.set(ylim=y_lim)
+#     ax.set_xticklabels(["nTg", "Tg", "TgAD"], size=tick)
+#
+#     # ax.legend_.remove()
+#
+#     plt.savefig('plots/tau_pre_CHOW_nofilter.png', dpi=300, bbox_inches='tight')
 
 
 def main():
