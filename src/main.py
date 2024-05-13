@@ -1,5 +1,6 @@
 import csv
 import os
+
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -132,25 +133,35 @@ def boxplot(rat_data: list[RatData], metabolite: str, iso: str) -> None:
     plt.figure(figsize=figsize)
     sns.set_theme(style=theme)
 
-    data = [[item.genetics, item.metabolites[metabolite][0]] for item in rat_data if item.iso == iso]
-    x = "Genotype"
-    y = "Concentration"
+    data = [[], [], []]
+    genotypes = ["nTg", "Tg", "TgAD"]
+    for item in rat_data:
+        if item.iso == iso:
+            if item.genetics == "nTg":
+                data[0].append(item.metabolites[metabolite][0])
+            elif item.genetics == "Tg":
+                data[1].append(item.metabolites[metabolite][0])
+            else:
+                data[2].append(item.metabolites[metabolite][0])
+    pad = len(max(data, key=len))
+    data = np.array([i + [0] * (pad - len(i)) for i in data])
+    y = metabolite
     y_lim = (0, 7)
 
-    ax = sns.boxplot(x=x, y=y, data=data, order=["nTg", "Tg", "TgAD"], palette=palette_geno, showmeans=True,
+    ax = sns.boxplot(x=x, y=y, data=data, order=genotypes, palette=palette_geno, showmeans=True,
                      meanprops={"marker": "o", "markerfacecolor": "white", "markeredgecolor": "black",
                                 "markersize": "5"})
-    ax = sns.stripplot(x=x, y=y, data=data, order=["nTg", "Tg", "TgAD"], marker="o", alpha=1, color="black", dodge=0.1)
+    ax = sns.stripplot(x=x, y=y, data=data, order=genotypes, marker="o", alpha=1, color="black", dodge=0.1)
 
-    plt.title("{} Concentration for {}\n".format(metabolite, iso), fontsize=title)
+    plt.title("{} concentration for different genotype mice under {}\n".format(metabolite, iso), fontsize=title)
     ax.set_xlabel("Genotype", fontsize=label)
-    ax.set_ylabel("concentration (mmol)", fontsize=label)
+    ax.set_ylabel("Concentration (mmol)", fontsize=label)
     ax.set(ylim=y_lim)
-    ax.set_xticklabels(["nTg", "Tg", "TgAD"], size=tick)
+    ax.set_xticklabels(genotypes, size=tick)
 
     # ax.legend_.remove()
 
-    plt.savefig('plots/tau_pre_CHOW_nofilter.png', dpi=300, bbox_inches='tight')
+    plt.savefig('plots/{}_{}_no_filter.png'.format(metabolite, iso), dpi=300, bbox_inches='tight')
 
 
 def main():
