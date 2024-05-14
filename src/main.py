@@ -86,7 +86,6 @@ def read_csv(filename: str, rat_id: str, gender: str, genetics: str, iso: bool):
 
 
 def write_csv(rat_high: list[RatData], rat_low: list[RatData], path: str) -> None:
-
     filename = path + '/' + "MRS_Data.csv"
 
     if len(rat_high) < 1 or len(rat_low) < 1:
@@ -95,28 +94,31 @@ def write_csv(rat_high: list[RatData], rat_low: list[RatData], path: str) -> Non
 
     fields = ["Id", "Genotype", "Gender"]
     rats_data = []
+    plot_data = {'Genotype': [], "iso": []}
 
     rat_high_field = list(rat_high[0].metabolites.keys())
     for i in range(len(rat_high_field)):
+        plot_data[rat_high_field[i]] = []
         for j in range(3):
             fields.append(rat_high[0].metabolites[rat_high_field[i]][j][0])
             fields.append(rat_low[0].metabolites[rat_high_field[i]][j][0])
 
     for k in range(len(rat_high)):
         rat_data = {'Id': rat_high[k].id, 'Gender': rat_high[k].gender, 'Genotype': rat_high[k].genetics}
+        plot_data['Genotype'].append(rat_high[k].genetics)
+        plot_data['Genotype'].append(rat_high[k].genetics)
+        plot_data["iso"].append(rat_high[k].iso)
+        plot_data["iso"].append(rat_low[k].iso)
         for item in rat_high_field:
-            rat_data[rat_high[k].metabolites[item][0][0]] = rat_high[k].metabolites[item][0][1]
-            rat_data[rat_low[k].metabolites[item][0][0]] = rat_low[k].metabolites[item][0][1]
-            rat_data[rat_high[k].metabolites[item][1][0]] = rat_high[k].metabolites[item][1][1]
-            rat_data[rat_low[k].metabolites[item][1][0]] = rat_low[k].metabolites[item][1][1]
-            rat_data[rat_high[k].metabolites[item][2][0]] = rat_high[k].metabolites[item][2][1]
-            rat_data[rat_low[k].metabolites[item][2][0]] = rat_low[k].metabolites[item][2][1]
+            plot_data[item].append(rat_high[k].metabolites[item][0][1])
+            plot_data[item].append(rat_low[k].metabolites[item][0][1])
+            for m in range(3):
+                rat_data[rat_high[k].metabolites[item][m][0]] = rat_high[k].metabolites[item][m][1]
+
         rats_data.append(rat_data)
 
-    total_data = rat_low + rat_high
     for field in rat_high_field:
-        boxplot(total_data, field, "iso_low", path)
-        boxplot(total_data, field, "iso_high", path)
+        boxplot(plot_data, field, path)
 
     with open(filename, 'w', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fields)
@@ -126,7 +128,7 @@ def write_csv(rat_high: list[RatData], rat_low: list[RatData], path: str) -> Non
         writer.writerows(rats_data)
 
 
-def boxplot(rat_data: list[RatData], metabolite: str, iso: str, path: str) -> None:
+def boxplot(data, metabolite: str, path: str) -> None:
     figsize = (1.25, 3)
     theme = "whitegrid"
     palette_geno = ['olivedrab', 'darkorange']
@@ -137,38 +139,43 @@ def boxplot(rat_data: list[RatData], metabolite: str, iso: str, path: str) -> No
     plt.figure(figsize=figsize)
     sns.set_theme(style=theme)
 
-    data = [[], [], []]
+    data = pd.DataFrame(data)
+    print(data)
     genotypes = ["nTg", "Tg", "TgAD"]
-    for item in rat_data:
-        if item.iso == iso:
-            if item.genetics == "nTg":
-                data[0].append(item.metabolites[metabolite][0])
-            elif item.genetics == "Tg":
-                data[1].append(item.metabolites[metabolite][0])
-            else:
-                data[2].append(item.metabolites[metabolite][0])
-    max_len = max(map(len, data))
-    for i in range(len(data)):
-        while len(data[i]) < max_len:
-            data[i].append(None)
+    x = 'Genotype'
+    y = metabolite
+    y_lim = (0, 7)
 
-    rat_dict = {"nTg": data[0], "Tg": data[1], "TgAD": data[2]}
-    data = pd.DataFrame(rat_dict)
+    # data = [[], [], []]
+    # for item in rat_data:
+    #     if item.iso == iso:
+    #         if item.genetics == "nTg":
+    #             data[0].append(item.metabolites[metabolite][0])
+    #         elif item.genetics == "Tg":
+    #             data[1].append(item.metabolites[metabolite][0])
+    #         else:
+    #             data[2].append(item.metabolites[metabolite][0])
+    # max_len = max(map(len, data))
+    # for i in range(len(data)):
+    #     while len(data[i]) < max_len:
+    #         data[i].append(None)
+    #
+    # rat_dict = {"nTg": data[0], "Tg": data[1], "TgAD": data[2]}
+    # data = pd.DataFrame(rat_dict)
 
-    ax = sns.boxplot(data=data, order=genotypes, palette=palette_geno, showmeans=True,
+    ax = sns.boxplot(x=x, y=y, data=data, hue="iso", order=genotypes, palette=palette_geno, showmeans=True,
                      meanprops={"marker": "o", "markerfacecolor": "white", "markeredgecolor": "black",
                                 "markersize": "5"})
     ax = sns.stripplot(data=data, order=genotypes, marker="o", alpha=1, color="black", dodge=0.1)
 
-    plt.title("{} concentration for different genotype mice under {}\n".format(metabolite, iso), fontsize=title)
+    plt.title("{} concentration for different genotype mice\n".format(metabolite), fontsize=title)
     ax.set_xlabel("Genotype", fontsize=label)
     ax.set_ylabel("Concentration (mmol)", fontsize=label)
-    # ax.set(ylim=y_lim)
     ax.set_xticklabels(genotypes, size=tick)
 
     # ax.legend_.remove()
 
-    plt.savefig('{}/{}_{}_no_filter.png'.format(path, metabolite, iso), dpi=300, bbox_inches='tight')
+    plt.savefig('{}/{}_no_filter.png'.format(path, metabolite), dpi=300, bbox_inches='tight')
 
 
 def main():
