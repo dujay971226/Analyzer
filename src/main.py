@@ -140,11 +140,10 @@ def boxplot(data, metabolite: str, path: str) -> None:
     sns.set_theme(style=theme)
 
     data = pd.DataFrame(data)
-    print(data)
+    # print(data)
     genotypes = ["nTg", "Tg", "TgAD"]
     x = 'Genotype'
     y = metabolite
-    y_lim = (0, 7)
 
 
     ax = sns.boxplot(x=x, y=y, data=data, hue="iso", order=genotypes, palette=palette_geno, showmeans=True,
@@ -159,7 +158,7 @@ def boxplot(data, metabolite: str, path: str) -> None:
 
     # ax.legend_.remove()
 
-    plt.savefig('{}/{}_no_filter.png'.format(path, metabolite), dpi=300, bbox_inches='tight')
+    plt.savefig('{}/plots/{}_no_filter.png'.format(path, metabolite), dpi=300, bbox_inches='tight')
 
 
 def main():
@@ -169,7 +168,7 @@ def main():
 
     for name in os.listdir(output_csv):
         sub_folder = output_csv + '/' + name
-        if os.path.isdir(sub_folder):
+        if os.path.isdir(sub_folder) and name != "plots":
             lst = name.strip().split('_')
             rat_id = lst[1]
             genetics = lst[6]
