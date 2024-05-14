@@ -146,22 +146,6 @@ def boxplot(data, metabolite: str, path: str) -> None:
     y = metabolite
     y_lim = (0, 7)
 
-    # data = [[], [], []]
-    # for item in rat_data:
-    #     if item.iso == iso:
-    #         if item.genetics == "nTg":
-    #             data[0].append(item.metabolites[metabolite][0])
-    #         elif item.genetics == "Tg":
-    #             data[1].append(item.metabolites[metabolite][0])
-    #         else:
-    #             data[2].append(item.metabolites[metabolite][0])
-    # max_len = max(map(len, data))
-    # for i in range(len(data)):
-    #     while len(data[i]) < max_len:
-    #         data[i].append(None)
-    #
-    # rat_dict = {"nTg": data[0], "Tg": data[1], "TgAD": data[2]}
-    # data = pd.DataFrame(rat_dict)
 
     ax = sns.boxplot(x=x, y=y, data=data, hue="iso", order=genotypes, palette=palette_geno, showmeans=True,
                      meanprops={"marker": "o", "markerfacecolor": "white", "markeredgecolor": "black",
