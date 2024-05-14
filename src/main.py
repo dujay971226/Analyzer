@@ -2,6 +2,7 @@ import csv
 import os
 
 import numpy as np
+import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -84,7 +85,10 @@ def read_csv(filename: str, rat_id: str, gender: str, genetics: str, iso: bool):
     return rat_data
 
 
-def write_csv(rat_high: list[RatData], rat_low: list[RatData], filename: str) -> None:
+def write_csv(rat_high: list[RatData], rat_low: list[RatData], path: str) -> None:
+
+    filename = path + '/' + "MRS_Data.csv"
+
     if len(rat_high) < 1 or len(rat_low) < 1:
         print("No rat data available")
         return
@@ -111,8 +115,8 @@ def write_csv(rat_high: list[RatData], rat_low: list[RatData], filename: str) ->
 
     total_data = rat_low + rat_high
     for field in rat_high_field:
-        boxplot(total_data, field, "iso_low")
-        boxplot(total_data, field, "iso_high")
+        boxplot(total_data, field, "iso_low", path)
+        boxplot(total_data, field, "iso_high", path)
 
     with open(filename, 'w', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fields)
@@ -122,7 +126,7 @@ def write_csv(rat_high: list[RatData], rat_low: list[RatData], filename: str) ->
         writer.writerows(rats_data)
 
 
-def boxplot(rat_data: list[RatData], metabolite: str, iso: str) -> None:
+def boxplot(rat_data: list[RatData], metabolite: str, iso: str, path: str) -> None:
     figsize = (1.25, 3)
     theme = "whitegrid"
     palette_geno = ['olivedrab', 'darkorange']
@@ -143,34 +147,37 @@ def boxplot(rat_data: list[RatData], metabolite: str, iso: str) -> None:
                 data[1].append(item.metabolites[metabolite][0])
             else:
                 data[2].append(item.metabolites[metabolite][0])
-    pad = len(max(data, key=len))
-    data = np.array([i + [0] * (pad - len(i)) for i in data])
-    y = metabolite
-    y_lim = (0, 7)
+    max_len = max(map(len, data))
+    for i in range(len(data)):
+        while len(data[i]) < max_len:
+            data[i].append(None)
 
-    ax = sns.boxplot(x=x, y=y, data=data, order=genotypes, palette=palette_geno, showmeans=True,
+    rat_dict = {"nTg": data[0], "Tg": data[1], "TgAD": data[2]}
+    data = pd.DataFrame(rat_dict)
+
+    ax = sns.boxplot(data=data, order=genotypes, palette=palette_geno, showmeans=True,
                      meanprops={"marker": "o", "markerfacecolor": "white", "markeredgecolor": "black",
                                 "markersize": "5"})
-    ax = sns.stripplot(x=x, y=y, data=data, order=genotypes, marker="o", alpha=1, color="black", dodge=0.1)
+    ax = sns.stripplot(data=data, order=genotypes, marker="o", alpha=1, color="black", dodge=0.1)
 
     plt.title("{} concentration for different genotype mice under {}\n".format(metabolite, iso), fontsize=title)
     ax.set_xlabel("Genotype", fontsize=label)
     ax.set_ylabel("Concentration (mmol)", fontsize=label)
-    ax.set(ylim=y_lim)
+    # ax.set(ylim=y_lim)
     ax.set_xticklabels(genotypes, size=tick)
 
     # ax.legend_.remove()
 
-    plt.savefig('plots/{}_{}_no_filter.png'.format(metabolite, iso), dpi=300, bbox_inches='tight')
+    plt.savefig('{}/{}_{}_no_filter.png'.format(path, metabolite, iso), dpi=300, bbox_inches='tight')
 
 
 def main():
-    folder = "C:/Users/Imaris Ryzen/Downloads/MRS"
+    output_csv = "C:/Users/Imaris Ryzen/Downloads/MRS"
     rats_high = []
     rats_low = []
 
-    for name in os.listdir(folder):
-        sub_folder = folder + '/' + name
+    for name in os.listdir(output_csv):
+        sub_folder = output_csv + '/' + name
         if os.path.isdir(sub_folder):
             lst = name.strip().split('_')
             rat_id = lst[1]
@@ -190,11 +197,9 @@ def main():
         else:
             continue
 
-    output_csv = folder + '/' + "MRS_Data.csv"
-
     write_csv(rats_low, rats_high, output_csv)
 
-    print("Conversion Completed, file saved at {}".format(folder))
+    print("Conversion Completed, file saved at {}".format(output_csv))
 
 
 if __name__ == "__main__":
